@@ -44,7 +44,7 @@ namespace AssemblyTester
 
 		public static object Test(string fileName, string typeName, string methodName, string[] parametersArray, string[] typesArray)
 		{
-			Assembly assembly = Assembly.LoadFile(fileName);
+			Assembly assembly = Assembly.LoadFrom(fileName);
 			Type type = assembly.GetType(typeName);
 			object result = null;
 			if (type != null)
