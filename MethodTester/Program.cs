@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 using NDesk.Options;
 
@@ -168,36 +171,44 @@ namespace AssemblyTester
 
 		public static string XmlSerializeToString(object objectInstance)
 		{
-			var serializer = new XmlSerializer(objectInstance.GetType());
-			var sb = new StringBuilder();
-
-			using (TextWriter writer = new StringWriter(sb))
+			using (var writer = new StringWriter())
 			{
-				serializer.Serialize(writer, objectInstance);
+				using (XmlWriter xmlWriter = new NoNamespaceXmlWriter(writer))
+				{
+					var ser = new DataContractSerializer(objectInstance.GetType());
+					ser.WriteObject(xmlWriter, objectInstance);
+					return writer.ToString();
+				}
 			}
-
-			return sb.ToString();
-		}
-
-		public static T XmlDeserializeFromString<T>(string objectData)
-		{
-			return (T)XmlDeserializeFromString(objectData, typeof(T));
 		}
 
 		public static object XmlDeserializeFromString(string objectData, Type type)
 		{
 			if (type == typeof(string))
 				return objectData;
-
-			var serializer = new XmlSerializer(type);
 			object result;
-
-			using (TextReader reader = new StringReader(objectData))
-			{
-				result = serializer.Deserialize(reader);
+			var ser = new DataContractSerializer(type);
+			using (var ms = new MemoryStream())
+			{ // clone it via DCS
+				ser.WriteObject(ms, objectData);
+				ms.Position = 0;
+				result = ser.ReadObject(ms);
 			}
-
 			return result;
+		}
+	}
+
+	public class NoNamespaceXmlWriter : XmlTextWriter
+	{
+		//Provide as many contructors as you need
+		public NoNamespaceXmlWriter(System.IO.TextWriter output)
+			: base(output) { Formatting = System.Xml.Formatting.Indented; }
+
+		public override void WriteStartDocument() { }
+
+		public override void WriteStartElement(string prefix, string localName, string ns)
+		{
+			base.WriteStartElement("", localName, "");
 		}
 	}
 }
