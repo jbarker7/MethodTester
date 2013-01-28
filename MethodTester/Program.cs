@@ -4,11 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
 using NDesk.Options;
 
 namespace AssemblyTester
